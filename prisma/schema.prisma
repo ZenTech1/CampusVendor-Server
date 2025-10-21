@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  vendors   Vendor[]
+  carts     Cart[]
+  orders    Order[]
+  reviews   Review[]
+  OTP       String
+}
+
+model Vendor {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+  entName     String
+  description String
+  phone       String
+  location    String
+  products    Product[]
+  reviews     Review[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  vendorId    String
+  name        String
+  description String
+  price       Float
+  status      Boolean
+  category    String
+  reviews     Review[]
+  carts       CartProduct[]     // 👈 new join table link
+}
+
+model Cart {
+  id        String        @id @default(uuid())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  products  CartProduct[] // 👈 join table link
+  orders    Order[]       // 👈 back relation for Order
+}
+
+model CartProduct {
+  id         String   @id @default(uuid())
+  cart       Cart     @relation(fields: [cartId], references: [id])
+  cartId     String
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  quantity   Int       @default(1)
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id        String       @id @default(uuid())
+  user      User         @relation(fields: [userId], references: [id])
+  userId    String
+  cart      Cart         @relation(fields: [cartId], references: [id])
+  cartId    String
+  status    OrderStatus  @default(PENDING)
+  date      DateTime     @default(now())
+  delivery  Delivery?    // 👈 back reference
+  payment   Payment?     // 👈 back reference
+}
+
+enum DeliveryStatus {
+  PREPARING
+  INTRANSIT
+  DELIVERED
+}
+
+model Delivery {
+  id          String          @id @default(uuid())
+  order       Order           @relation(fields: [orderId], references: [id])
+  orderId     String          @unique
+  destination String
+  status      DeliveryStatus  @default(PREPARING)
+  date        DateTime        @default(now())
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String   @unique
+  amount    Float
+  date      DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id])
+  vendorId  String
+  rate      Int
+  comment   String
+}
+
