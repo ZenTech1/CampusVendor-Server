@@ -11,29 +11,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendWelcomeEmail(staffEmail, staffName, tempPassword) {
+export async function sendOTP(name, email, OTP) {
   const emailTemplate = `
   <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; }
-        .credentials { background-color: #e8f5e8; padding: 15px; }
-      </style>
-    </head>
-    <body>
-      <h1>Welcome to CampusVendor, ${user}
-      your Signup OTP is ${OTP} 
-      Do not share this code with anyone.
-      </h1>
-      
-    </body>
-    </html>
-  `;
+  <html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; }
+      .otp-box { background-color: #e8f5e8; padding: 10px; font-size: 18px; width: fit-content; border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <h2>Welcome to CampusVendor, ${name}!</h2>
+    <p>Your OTP is:</p>
+    <div class="otp-box">${OTP}</div>
+    <p><strong>Do not share this code with anyone.</strong></p>
+  </body>
+  </html>
+`;
 
   const mailOptions = {
     from: process.env.EMAIL,
-    to: staffEmail,
+    to: email,
     subject: "YOUR CAMPUS VENDOR OTP",
     html: emailTemplate,
   };

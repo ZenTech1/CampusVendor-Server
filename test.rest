@@ -1,0 +1,74 @@
+### 🧍‍♂️ SIGN UP (Student)
+POST http://localhost:3000/api/auth/signUp/student
+Content-Type: application/json
+
+{
+  "name": "Victor Pinto",
+  "email": "vkpinto1234@gmail.com",
+  "password": "SuperStrongPassword123"
+}
+
+
+### 🔑 VERIFY OTP (after receiving it in your email)
+# Copy the `token` from the signup response
+# Replace OTP with the actual 6-digit code sent to your email
+POST http://localhost:3000/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "otp": "123456",
+  "token": ""
+}
+
+
+### 🔐 LOGIN (2FA off)
+# This logs in the user normally (no OTP flow)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "victor@example.com",
+  "password": "SuperStrongPassword123"
+}
+
+
+### 🔒 ENABLE 2FA
+# Copy token from login response
+POST http://localhost:3000/api/auth/2fa/enable
+Authorization: Bearer 
+Content-Type: application/json
+
+
+### 🔓 DISABLE 2FA
+# Copy token from login response
+POST http://localhost:3000/api/auth/2fa/disable
+Authorization: Bearer 
+Content-Type: application/json
+
+
+### 🧪 LOGIN (2FA ON)
+# If 2FA is enabled, this will trigger OTP email before login completes.
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "victor@example.com",
+  "password": "SuperStrongPassword123"
+}
+
+
+### ✅ VERIFY LOGIN OTP (only when 2FA is enabled)
+# Use token returned from 2FA login
+POST http://localhost:3000/api/auth/verify-login-otp
+Content-Type: application/json
+
+{
+  "otp": "123456",
+  "token": ""
+}
+
+
+### 🧠 TEST AUTH-PROTECTED ROUTE
+# Replace {{auth_token}} with the token from successful login or verified OTP login
+GET http://localhost:3000/api/protected
+Authorization: Bearer 

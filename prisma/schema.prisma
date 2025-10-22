@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -23,7 +22,8 @@ model User {
   carts     Cart[]
   orders    Order[]
   reviews   Review[]
-  OTP       String
+  OTP       String?
+  twoFA     Boolean  @default(false)
 }
 
 model Vendor {
