@@ -5,14 +5,20 @@ The vision of CampusVendor is to become the go-to digital marketplace for campus
 # server documentation
 # Create a .env file in the root directory with:
 JWT_secret="secret key"
+
 EMAIL="Zentech2099@gmail.com"
+
 PASSWORD="yrbl gpzh rqeb remh"
+
 DATABASE_URL="postgresql://campus_vendor_db_user:vyeo6COekjRDzpBlOzE1pnUPj0Fe6umZ@dpg-d3r3mtumcj7s73bk4og0-a.oregon-postgres.render.com/campus_vendor_db"
 
 # run the server with:
 npm install
+
 npx prisma generate
+
 npx prisma migrate dev
+
 npm run dev
 
 # API  
