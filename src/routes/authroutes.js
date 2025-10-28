@@ -8,65 +8,21 @@ import { verifyToken } from "../middleware/authmiddleware.js";
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+// Helper: Generate numeric OTP
 function generateOTP(length = 6) {
-  const charset = "1234567890";
-  let OTP = "";
-  for (let i = 0; i < length; i++) {
-    OTP += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return OTP;
+  const digits = "1234567890";
+  return Array.from(
+    { length },
+    () => digits[Math.floor(Math.random() * 10)]
+  ).join("");
 }
 
-/**
- * @swagger
- * tags:
- *   name: Authentication
- *   description: API endpoints for user registration, login, and two-factor authentication
- */
+// ============================================================
+// ================= STUDENT SIGNUP & VERIFICATION =============
+// ============================================================
 
-/**
- * @swagger
- * /api/auth/signUp/student:
- *   post:
- *     summary: Register a new student and send OTP to email
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name, email, password]
- *             properties:
- *               name:
- *                 type: string
- *                 example: John Doe
- *               email:
- *                 type: string
- *                 example: johndoe@example.com
- *               password:
- *                 type: string
- *                 example: mySecurePassword123
- *     responses:
- *       200:
- *         description: OTP sent successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 token:
- *                   type: string
- *       400:
- *         description: User already exists
- *       500:
- *         description: Failed to send OTP or internal error
- */
 router.post("/signUp/student", async (req, res) => {
   const { name, email, password } = req.body;
-
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser)
@@ -74,137 +30,151 @@ router.post("/signUp/student", async (req, res) => {
 
     const otp = generateOTP();
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const sent = await sendOTP(name, email, otp);
-    if (!sent.success) {
+    if (!sent.success)
       return res.status(500).json({ message: "Failed to send OTP" });
-    }
 
     const signupToken = jwt.sign(
-      { name, email, password: hashedPassword, otp },
+      { name, email, password: hashedPassword, otp, role: "STUDENT" },
       JWT_SECRET,
       { expiresIn: "5m" }
     );
 
-    res.status(200).json({
+    res.json({
       message: "OTP sent to email. Verify to complete signup.",
       token: signupToken,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error during signup" });
   }
 });
 
-/**
- * @swagger
- * /api/auth/verify-otp:
- *   post:
- *     summary: Verify signup OTP and create new user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [otp, token]
- *             properties:
- *               otp:
- *                 type: string
- *                 example: "123456"
- *               token:
- *                 type: string
- *                 example: "jwt_token_here"
- *     responses:
- *       201:
- *         description: User successfully created
- *       400:
- *         description: Invalid OTP
- *       401:
- *         description: OTP expired
- *       500:
- *         description: Internal server error
- */
-router.post("/verify-otp", async (req, res) => {
+router.post("/verify-otp/student", async (req, res) => {
   const { otp, token } = req.body;
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const { name, email, password, otp: storedOtp } = decoded;
-
-    if (otp !== storedOtp) {
+    if (otp !== decoded.otp)
       return res.status(400).json({ message: "Invalid OTP" });
-    }
 
-    const newUser = await prisma.user.create({
-      data: { name, email, password, OTP: otp },
+    const user = await prisma.user.create({
+      data: {
+        name: decoded.name,
+        email: decoded.email,
+        password: decoded.password,
+        role: decoded.role,
+        OTP_verified: true,
+      },
     });
-
-    res.status(201).json({
-      message: "Signup complete",
-      user: { id: newUser.id, name: newUser.name, email: newUser.email },
-    });
+    res.status(201).json({ message: "Student signup complete", user });
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ message: "OTP expired. Please sign up again." });
-    }
-    console.error(error);
     res.status(500).json({ message: "Error verifying OTP" });
   }
 });
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login user (sends OTP if 2FA is enabled)
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [email, password]
- *             properties:
- *               email:
- *                 type: string
- *                 example: johndoe@example.com
- *               password:
- *                 type: string
- *                 example: mySecurePassword123
- *     responses:
- *       200:
- *         description: Login successful or OTP sent
- *       400:
- *         description: Invalid credentials
- *       500:
- *         description: Login failed
- */
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+// ============================================================
+// ====================== VENDOR SIGNUP ========================
+// ============================================================
+
+router.post("/signUp/vendor", async (req, res) => {
+  const { name, email, password, entName, phone, location, description } =
+    req.body;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    const existingVendor = await prisma.vendor.findUnique({ where: { email } });
+    if (existingVendor)
+      return res.status(400).json({ message: "Vendor already exists" });
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const otp = generateOTP();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sent = await sendOTP(name, email, otp);
+    if (!sent.success)
+      return res.status(500).json({ message: "Failed to send OTP" });
+
+    const signupToken = jwt.sign(
+      {
+        name,
+        email,
+        password: hashedPassword,
+        entName,
+        phone,
+        location,
+        description,
+        otp,
+      },
+      JWT_SECRET,
+      { expiresIn: "5m" }
+    );
+
+    res.json({
+      message: "OTP sent to email. Verify to complete signup.",
+      token: signupToken,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error during vendor signup" });
+  }
+});
+
+router.post("/verify-otp/vendor", async (req, res) => {
+  const { otp, token } = req.body;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (otp !== decoded.otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    const vendor = await prisma.vendor.create({
+      data: {
+        name: decoded.name,
+        email: decoded.email,
+        password: decoded.password,
+        entName: decoded.entName,
+        description: decoded.description,
+        phone: decoded.phone,
+        location: decoded.location,
+        OTP_verified: true,
+      },
+    });
+
+    res.status(201).json({ message: "Vendor signup complete", vendor });
+  } catch (error) {
+    res.status(500).json({ message: "Error verifying vendor OTP" });
+  }
+});
+
+// ============================================================
+// ================== UNIFIED LOGIN (USER+VENDOR) ==============
+// ============================================================
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    let accountType = "USER";
+    let account = await prisma.user.findUnique({ where: { email } });
+
+    if (!account) {
+      account = await prisma.vendor.findUnique({ where: { email } });
+      if (account) accountType = "VENDOR";
+    }
+
+    if (!account) return res.status(404).json({ message: "Account not found" });
+
+    const validPassword = await bcrypt.compare(password, account.password);
     if (!validPassword)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    if (user.twoFA) {
+    // 2FA support
+    if (account.twoFA) {
       const otp = generateOTP();
-      await prisma.user.update({ where: { email }, data: { OTP: otp } });
-
-      const sent = await sendOTP(user.name, email, otp);
-      if (!sent.success) {
-        return res.status(500).json({ message: "Failed to send 2FA OTP" });
+      if (accountType === "USER") {
+        await prisma.user.update({ where: { email }, data: { OTP: otp } });
+      } else {
+        await prisma.vendor.update({ where: { email }, data: { OTP: otp } });
       }
 
-      const tempToken = jwt.sign({ id: user.id, email }, JWT_SECRET, {
+      const sent = await sendOTP(account.name, email, otp);
+      if (!sent.success)
+        return res.status(500).json({ message: "Failed to send 2FA OTP" });
+
+      const tempToken = jwt.sign({ email, accountType }, JWT_SECRET, {
         expiresIn: "5m",
       });
       return res.status(200).json({
@@ -213,145 +183,156 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const authToken = jwt.sign({ id: user.id, email }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: account.id, email, type: accountType },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
-    res.status(200).json({
-      message: "Login successful",
-      token: authToken,
-      user: { id: user.id, name: user.name, email: user.email },
+    res.status(accountType === "USER" ? 200 : 201).json({
+      message: `${accountType} login successful`,
+      token,
+      account,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Login failed" });
+    res.status(500).json({ message: "Login error" });
   }
 });
 
-/**
- * @swagger
- * /api/auth/verify-2fa:
- *   post:
- *     summary: Verify 2FA OTP and complete login
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [otp, token]
- *             properties:
- *               otp:
- *                 type: string
- *                 example: "123456"
- *               token:
- *                 type: string
- *                 example: "jwt_temp_token_here"
- *     responses:
- *       200:
- *         description: Login successful with 2FA
- *       400:
- *         description: Invalid OTP
- *       401:
- *         description: Token expired
- *       500:
- *         description: Internal server error
- */
+// ============================================================
+// ===================== VERIFY 2FA OTP ========================
+// ============================================================
+
 router.post("/verify-2fa", async (req, res) => {
   const { otp, token } = req.body;
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const { email } = decoded;
+    const { email, accountType } = decoded;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const account =
+      accountType === "USER"
+        ? await prisma.user.findUnique({ where: { email } })
+        : await prisma.vendor.findUnique({ where: { email } });
 
-    if (otp !== user.OTP)
+    if (!account) return res.status(404).json({ message: "Account not found" });
+    if (otp !== account.OTP)
       return res.status(400).json({ message: "Invalid OTP" });
 
-    const authToken = jwt.sign({ id: user.id, email }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const authToken = jwt.sign(
+      { id: account.id, email, type: accountType },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
-    await prisma.user.update({ where: { email }, data: { OTP: null } });
+    // clear OTP
+    if (accountType === "USER")
+      await prisma.user.update({ where: { email }, data: { OTP: null } });
+    else await prisma.vendor.update({ where: { email }, data: { OTP: null } });
 
     res.status(200).json({
       message: "2FA login successful",
       token: authToken,
-      user: { id: user.id, name: user.name, email: user.email },
+      account,
     });
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ message: "OTP expired. Please log in again." });
-    }
-    console.error(error);
     res.status(500).json({ message: "Error verifying 2FA OTP" });
   }
 });
 
-/**
- * @swagger
- * /api/auth/2fa/enable:
- *   post:
- *     summary: Enable two-factor authentication for user
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 2FA enabled
- *       500:
- *         description: Failed to enable 2FA
- */
+// ============================================================
+// ==================== ENABLE/DISABLE 2FA =====================
+// ============================================================
+
 router.post("/2fa/enable", verifyToken, async (req, res) => {
   try {
-    const updated = await prisma.user.update({
-      where: { id: req.user.id },
-      data: { twoFA: true },
-    });
-
-    res.status(200).json({
-      message: "2FA has been enabled.",
-      status: updated.twoFA,
-    });
+    const { id, type } = req.user;
+    if (type === "USER") {
+      await prisma.user.update({ where: { id }, data: { twoFA: true } });
+    } else {
+      await prisma.vendor.update({ where: { id }, data: { twoFA: true } });
+    }
+    res.json({ message: "2FA enabled successfully" });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to enable 2FA" });
   }
 });
 
-/**
- * @swagger
- * /api/auth/2fa/disable:
- *   post:
- *     summary: Disable two-factor authentication for user
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 2FA disabled
- *       500:
- *         description: Failed to disable 2FA
- */
 router.post("/2fa/disable", verifyToken, async (req, res) => {
   try {
-    const updated = await prisma.user.update({
-      where: { id: req.user.id },
-      data: { twoFA: false },
-    });
-
-    res.status(200).json({
-      message: "2FA has been disabled.",
-      status: updated.twoFA,
-    });
+    const { id, type } = req.user;
+    if (type === "USER") {
+      await prisma.user.update({ where: { id }, data: { twoFA: false } });
+    } else {
+      await prisma.vendor.update({ where: { id }, data: { twoFA: false } });
+    }
+    res.json({ message: "2FA disabled successfully" });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to disable 2FA" });
+  }
+});
+
+// ============================================================
+// ================= RESEND OTP + RESET PASSWORD ===============
+// ============================================================
+
+router.post("/resend-otp", async (req, res) => {
+  const { email } = req.body;
+  try {
+    let account = await prisma.user.findUnique({ where: { email } });
+    let accountType = "USER";
+    if (!account) {
+      account = await prisma.vendor.findUnique({ where: { email } });
+      if (account) accountType = "VENDOR";
+    }
+
+    if (!account) return res.status(404).json({ message: "Account not found" });
+
+    const otp = generateOTP();
+    if (accountType === "USER")
+      await prisma.user.update({ where: { email }, data: { OTP: otp } });
+    else await prisma.vendor.update({ where: { email }, data: { OTP: otp } });
+
+    const sent = await sendOTP(account.name, email, otp);
+    if (!sent.success)
+      return res.status(500).json({ message: "Failed to resend OTP" });
+
+    res.json({ message: "OTP resent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error resending OTP" });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    let account = await prisma.user.findUnique({ where: { email } });
+    let accountType = "USER";
+    if (!account) {
+      account = await prisma.vendor.findUnique({ where: { email } });
+      if (account) accountType = "VENDOR";
+    }
+
+    if (!account) return res.status(404).json({ message: "Account not found" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    if (accountType === "USER")
+      await prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      });
+    else
+      await prisma.vendor.update({
+        where: { email },
+        data: { password: hashedPassword },
+      });
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    res.status(500).json({ message: "Error resetting password" });
   }
 });
 

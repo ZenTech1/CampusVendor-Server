@@ -1,4 +1,4 @@
-### 🧍‍♂️ SIGN UP (Student)
+####  SIGN UP
 POST http://localhost:3000/api/auth/signUp/student
 Content-Type: application/json
 
@@ -9,20 +9,17 @@ Content-Type: application/json
 }
 
 
-### 🔑 VERIFY OTP (after receiving it in your email)
-# Copy the `token` from the signup response
-# Replace OTP with the actual 6-digit code sent to your email
+###  VERIFY OTP (after sign-up)
 POST http://localhost:3000/api/auth/verify-otp
 Content-Type: application/json
 
 {
-  "otp": "123456",
-  "token": ""
+  "otp": "962657",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVmljdG9yIFBpbnRvIiwiZW1haWwiOiJ2a3BpbnRvMTIzNEBnbWFpbC5jb20iLCJwYXNzd29yZCI6IiQyYiQxMCRsbEFIdm4ycWp0QndmNFV3ZXk0NG0uZTRobWxyVFlZOVd6Mkxzb1JhZDYuWGxZMzlkbnBHMiIsIm90cCI6Ijk2MjY1NyIsImlhdCI6MTc2MTE0NjMzMiwiZXhwIjoxNzYxMTQ2NjMyfQ.rP11Li4VU0WqrgvGvoWNfd99FRfjWNOL1G8RcR-KnrI"
 }
 
 
-### 🔐 LOGIN (2FA off)
-# This logs in the user normally (no OTP flow)
+###  LOGIN (2FA off)
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
@@ -32,21 +29,21 @@ Content-Type: application/json
 }
 
 
-### 🔒 ENABLE 2FA
+### ENABLE 2FA
 # Copy token from login response
 POST http://localhost:3000/api/auth/2fa/enable
 Authorization: Bearer 
 Content-Type: application/json
 
 
-### 🔓 DISABLE 2FA
+### DISABLE 2FA
 # Copy token from login response
 POST http://localhost:3000/api/auth/2fa/disable
 Authorization: Bearer 
 Content-Type: application/json
 
 
-### 🧪 LOGIN (2FA ON)
+### LOGIN (2FA ON)
 # If 2FA is enabled, this will trigger OTP email before login completes.
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
@@ -57,8 +54,8 @@ Content-Type: application/json
 }
 
 
-### ✅ VERIFY LOGIN OTP (only when 2FA is enabled)
-# Use token returned from 2FA login
+### VERIFY LOGIN OTP (only when 2FA is enabled)
+# Use token returned from 2FA loginh
 POST http://localhost:3000/api/auth/verify-login-otp
 Content-Type: application/json
 
@@ -68,7 +65,7 @@ Content-Type: application/json
 }
 
 
-### 🧠 TEST AUTH-PROTECTED ROUTE
+### TEST AUTH-PROTECTED ROUTE
 # Replace {{auth_token}} with the token from successful login or verified OTP login
 GET http://localhost:3000/api/protected
 Authorization: Bearer 
