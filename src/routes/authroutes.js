@@ -111,6 +111,7 @@ router.post("/signUp/vendor", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Error during vendor signup" });
+    console.error(error);
   }
 });
 
