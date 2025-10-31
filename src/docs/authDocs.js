@@ -2,15 +2,15 @@
  * @swagger
  * tags:
  *   - name: Authentication
- *     description: API endpoints for user, vendor, OTP, and 2FA authentication
+ *     description: Endpoints for user and vendor registration, OTP, login, 2FA, and password management
  */
 
 /**
  * @swagger
  * /api/auth/signUp/student:
  *   post:
- *     summary: Register a new student and send OTP
- *     description: Creates a temporary user record, sends OTP to email, and returns a token used for OTP verification.
+ *     summary: Student registration and OTP
+ *     description: Registers a student by email, then sends OTP for verification. Returns a JWT token for verification.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -18,20 +18,17 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
+ *             required: [name, email, password]
  *             properties:
  *               name:
  *                 type: string
- *                 example: John Doe
+ *                 example: "John Doe"
  *               email:
  *                 type: string
- *                 example: johndoe@example.com
+ *                 example: "johndoe@example.com"
  *               password:
  *                 type: string
- *                 example: mysecurepassword123
+ *                 example: "mysecurepassword123"
  *     responses:
  *       200:
  *         description: OTP sent successfully
@@ -45,8 +42,8 @@
  * @swagger
  * /api/auth/verify-otp/student:
  *   post:
- *     summary: Verify student signup OTP
- *     description: Verifies the OTP sent to email and creates the student account in the database.
+ *     summary: Verify student OTP
+ *     description: Verifies the OTP sent to the student's email and creates the account in the DB.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -54,31 +51,29 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - otp
- *               - token
+ *             required: [otp, token]
  *             properties:
  *               otp:
  *                 type: string
  *                 example: "123456"
  *               token:
  *                 type: string
- *                 description: Token received from the signup endpoint
+ *                 description: Token received from signUp endpoint
  *     responses:
  *       201:
  *         description: Student signup complete
  *       400:
  *         description: Invalid OTP
  *       500:
- *         description: Verification error
+ *         description: Error verifying OTP
  */
 
 /**
  * @swagger
  * /api/auth/signUp/vendor:
  *   post:
- *     summary: Register a new vendor and send OTP
- *     description: Creates a temporary vendor record, sends OTP to email, and returns a token used for OTP verification.
+ *     summary: Vendor registration and OTP
+ *     description: Registers a vendor by email, sends OTP for verification, returns JWT token for verification.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -86,36 +81,29 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *               - entName
- *               - phone
- *               - location
- *               - description
+ *             required: [name, email, password, entName, phone, location, description]
  *             properties:
  *               name:
  *                 type: string
- *                 example: Jane Vendor
+ *                 example: "Jane Vendor"
  *               email:
  *                 type: string
- *                 example: vendor@example.com
+ *                 example: "vendor@example.com"
  *               password:
  *                 type: string
- *                 example: securevendorpass
+ *                 example: "securevendorpass"
  *               entName:
  *                 type: string
- *                 example: Jane’s Bakery
+ *                 example: "Jane’s Bakery"
  *               phone:
  *                 type: string
  *                 example: "+233241234567"
  *               location:
  *                 type: string
- *                 example: Accra, Ghana
+ *                 example: "Accra, Ghana"
  *               description:
  *                 type: string
- *                 example: We sell the best pastries on campus.
+ *                 example: "We sell the best pastries on campus."
  *     responses:
  *       200:
  *         description: OTP sent successfully
@@ -129,8 +117,8 @@
  * @swagger
  * /api/auth/verify-otp/vendor:
  *   post:
- *     summary: Verify vendor signup OTP
- *     description: Verifies the OTP sent to vendor email and creates the vendor account.
+ *     summary: Verify vendor OTP
+ *     description: Verifies the OTP sent to vendor's email, creates vendor account in the DB.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -138,31 +126,29 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - otp
- *               - token
+ *             required: [otp, token]
  *             properties:
  *               otp:
  *                 type: string
  *                 example: "654321"
  *               token:
  *                 type: string
- *                 description: Token received from the signup endpoint
+ *                 description: Token received from signUp endpoint
  *     responses:
  *       201:
  *         description: Vendor signup complete
  *       400:
  *         description: Invalid OTP
  *       500:
- *         description: Verification error
+ *         description: Error verifying OTP
  */
 
 /**
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login for both students and vendors
- *     description: Authenticates user/vendor and returns a JWT token. If 2FA is enabled, sends OTP and returns temporary token.
+ *     summary: Login (students and vendors)
+ *     description: Authenticates student/vendor with email and password, returns JWT token. If 2FA required, triggers OTP and returns temp token.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -170,16 +156,14 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
- *               - password
+ *             required: [email, password]
  *             properties:
  *               email:
  *                 type: string
- *                 example: johndoe@example.com
+ *                 example: "johndoe@example.com"
  *               password:
  *                 type: string
- *                 example: mysecurepassword123
+ *                 example: "mysecurepassword123"
  *     responses:
  *       200:
  *         description: Login successful or 2FA OTP sent
@@ -196,7 +180,7 @@
  * /api/auth/verify-2fa:
  *   post:
  *     summary: Verify 2FA OTP for login
- *     description: Verifies OTP and issues final JWT token.
+ *     description: Verifies the login OTP for 2FA and issues the final JWT token.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -204,9 +188,7 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - otp
- *               - token
+ *             required: [otp, token]
  *             properties:
  *               otp:
  *                 type: string
@@ -219,6 +201,8 @@
  *         description: 2FA verification successful
  *       400:
  *         description: Invalid OTP
+ *       404:
+ *         description: Account not found
  *       500:
  *         description: Verification error
  */
@@ -227,7 +211,7 @@
  * @swagger
  * /api/auth/2fa/enable:
  *   post:
- *     summary: Enable 2FA for user or vendor
+ *     summary: Enable 2FA for user/vendor
  *     description: Requires JWT authentication. Enables 2FA for the logged-in account.
  *     tags: [Authentication]
  *     security:
@@ -245,7 +229,7 @@
  * @swagger
  * /api/auth/2fa/disable:
  *   post:
- *     summary: Disable 2FA for user or vendor
+ *     summary: Disable 2FA for user/vendor
  *     description: Requires JWT authentication. Disables 2FA for the logged-in account.
  *     tags: [Authentication]
  *     security:
@@ -263,8 +247,8 @@
  * @swagger
  * /api/auth/resend-otp:
  *   post:
- *     summary: Resend OTP to email
- *     description: Sends a new OTP to an existing user or vendor.
+ *     summary: Resend OTP to user or vendor
+ *     description: Sends a new OTP to email of student or vendor.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -272,12 +256,11 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
+ *             required: [email]
  *             properties:
  *               email:
  *                 type: string
- *                 example: johndoe@example.com
+ *                 example: "johndoe@example.com"
  *     responses:
  *       200:
  *         description: OTP resent successfully
@@ -291,8 +274,8 @@
  * @swagger
  * /api/auth/reset-password:
  *   post:
- *     summary: Reset account password
- *     description: Resets the password for a user or vendor account.
+ *     summary: Reset password for user or vendor
+ *     description: Resets password for student or vendor account via email.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -300,16 +283,14 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
- *               - newPassword
+ *             required: [email, newPassword]
  *             properties:
  *               email:
  *                 type: string
- *                 example: johndoe@example.com
+ *                 example: "johndoe@example.com"
  *               newPassword:
  *                 type: string
- *                 example: newsecurepassword123
+ *                 example: "newsecurepassword123"
  *     responses:
  *       200:
  *         description: Password reset successful
