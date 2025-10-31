@@ -26,6 +26,7 @@ model User {
   OTP_verified   Boolean  @default(false)
   twoFA          Boolean  @default(false)
   profile_setup  Boolean  @default(false)
+  isAdmin        Boolean  @default(false)
 }
 
 model Vendor {
@@ -43,6 +44,7 @@ model Vendor {
   OTP            String?
   OTP_verified   Boolean  @default(false)
   twoFA          Boolean  @default(false)
+  admin_Approved Boolean  @default(false)
 }
 
 model Product {

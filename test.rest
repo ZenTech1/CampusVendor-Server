@@ -1,4 +1,4 @@
-####  SIGN UP
+#### STUDENT SIGN UP
 POST http://localhost:3000/api/auth/signUp/student
 Content-Type: application/json
 
@@ -10,53 +10,68 @@ Content-Type: application/json
 
 
 ###  VERIFY OTP (after sign-up)
-POST http://localhost:3000/api/auth/verify-otp
+POST http://localhost:3000/api/auth/verify-otp/student
 Content-Type: application/json
 
 {
-  "otp": "962657",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVmljdG9yIFBpbnRvIiwiZW1haWwiOiJ2a3BpbnRvMTIzNEBnbWFpbC5jb20iLCJwYXNzd29yZCI6IiQyYiQxMCRsbEFIdm4ycWp0QndmNFV3ZXk0NG0uZTRobWxyVFlZOVd6Mkxzb1JhZDYuWGxZMzlkbnBHMiIsIm90cCI6Ijk2MjY1NyIsImlhdCI6MTc2MTE0NjMzMiwiZXhwIjoxNzYxMTQ2NjMyfQ.rP11Li4VU0WqrgvGvoWNfd99FRfjWNOL1G8RcR-KnrI"
+  "otp": "021181",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVmljdG9yIFBpbnRvIiwiZW1haWwiOiJ2a3BpbnRvMTIzNEBnbWFpbC5jb20iLCJwYXNzd29yZCI6IiQyYiQxMCQ2QjV2bFd0ZzNFNlJKdFNRQVJ3SjMuMll4MHFBemVPRW9EQVlOMU9RQm52WHRpaGhib2dRVyIsImVudE5hbWUiOiJ2aWN0b3IgZW50ZXJwcmlzZSIsInBob25lIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRW50ZXJwcmlzZSBMb2NhdGlvbiIsImRlc2NyaXB0aW9uIjoiRW50ZXJwcmlzZSBEZXNjcmlwdGlvbiIsIm90cCI6IjAyMTE4MSIsImlhdCI6MTc2MTgzMDQ5MiwiZXhwIjoxNzYxODMwNzkyfQ.RwjJO9arvDQ8ZbLkqyCgBSoO9mxaXzmFr8lLy9DYw_o"
 }
 
 
-###  LOGIN (2FA off)
+### vendor sign up
+POST http://localhost:3000/api/auth/signUp/vendor
+Content-Type: application/json
+
+{
+  "name": "Victor Pinto",
+  "email": "vkpinto1234@gmail.com",
+  "password": "1234567890",
+  "entName": "victor enterprise",
+  "phone": "1234567890",
+  "location": "Enterprise Location",
+  "description": "Enterprise Description"
+  
+}
+
+### verify otp  vendor 
+POST http://localhost:3000/api/auth/verify-otp/vendor
+Content-Type: application/json
+
+{
+  "otp": "741485", 
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVmljdG9yIFBpbnRvIiwiZW1haWwiOiJ2a3BpbnRvMTIzNEBnbWFpbC5jb20iLCJwYXNzd29yZCI6IiQyYiQxMCRNbExxQkNWVU5weUdITXYuSENnRTIuWDZPSS5hMGI5N0NRamN3SnJ0QkgueDQxQ1JhdXFyRyIsImVudE5hbWUiOiJ2aWN0b3IgZW50ZXJwcmlzZSIsInBob25lIjoiMTIzNDU2Nzg5MCIsImxvY2F0aW9uIjoiRW50ZXJwcmlzZSBMb2NhdGlvbiIsImRlc2NyaXB0aW9uIjoiRW50ZXJwcmlzZSBEZXNjcmlwdGlvbiIsIm90cCI6Ijc0MTQ4NSIsImlhdCI6MTc2MTgzMDkyNCwiZXhwIjoxNzYxODMxMjI0fQ.MsnqkaKeWPUwXMM5Ka0agAzMmd6Q-j9CzLV9o2kf6wM"
+}
+
+### LOGIN (student or vendor)
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "victor@example.com",
-  "password": "SuperStrongPassword123"
-}
+  "email": "",
+  "password": ""
+}  
 
 
 ### ENABLE 2FA
-# Copy token from login response
+
 POST http://localhost:3000/api/auth/2fa/enable
 Authorization: Bearer 
 Content-Type: application/json
 
 
 ### DISABLE 2FA
-# Copy token from login response
+
 POST http://localhost:3000/api/auth/2fa/disable
 Authorization: Bearer 
 Content-Type: application/json
 
 
-### LOGIN (2FA ON)
-# If 2FA is enabled, this will trigger OTP email before login completes.
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
 
-{
-  "email": "victor@example.com",
-  "password": "SuperStrongPassword123"
-}
 
 
 ### VERIFY LOGIN OTP (only when 2FA is enabled)
-# Use token returned from 2FA loginh
-POST http://localhost:3000/api/auth/verify-login-otp
+POST http://localhost:3000/api/auth/verify-2fa
 Content-Type: application/json
 
 {
@@ -65,7 +80,19 @@ Content-Type: application/json
 }
 
 
-### TEST AUTH-PROTECTED ROUTE
-# Replace {{auth_token}} with the token from successful login or verified OTP login
-GET http://localhost:3000/api/protected
-Authorization: Bearer 
+### RESEND OTP 
+POST http://localhost:3000/api/auth/resend-otp
+content-type: application/json
+
+{
+  "email": ""
+}
+
+### reset password 
+POST http://localhost:3000/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "",
+  "newPassword": ""
+}

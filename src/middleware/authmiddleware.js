@@ -17,6 +17,22 @@ export function verifyToken(req, res, next) {
   }
 }
 
+export async function checkAdmin(req, res, next) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.isAdmin) {
+      return res.status(403).json({ message: "this user is not an Admin." });
+    }
+
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error checking admin status" });
+  }
+}
+
 export async function check2FA(req, res, next) {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });

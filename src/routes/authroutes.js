@@ -35,7 +35,7 @@ router.post("/signUp/student", async (req, res) => {
       return res.status(500).json({ message: "Failed to send OTP" });
 
     const signupToken = jwt.sign(
-      { name, email, password: hashedPassword, otp, role: "STUDENT" },
+      { name, email, password: hashedPassword, otp },
       JWT_SECRET,
       { expiresIn: "5m" }
     );
@@ -68,6 +68,7 @@ router.post("/verify-otp/student", async (req, res) => {
     res.status(201).json({ message: "Student signup complete", user });
   } catch (error) {
     res.status(500).json({ message: "Error verifying OTP" });
+    console.error(error);
   }
 });
 
@@ -138,6 +139,7 @@ router.post("/verify-otp/vendor", async (req, res) => {
     res.status(201).json({ message: "Vendor signup complete", vendor });
   } catch (error) {
     res.status(500).json({ message: "Error verifying vendor OTP" });
+    console.error(error);
   }
 });
 
@@ -162,7 +164,6 @@ router.post("/login", async (req, res) => {
     if (!validPassword)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    // 2FA support
     if (account.twoFA) {
       const otp = generateOTP();
       if (accountType === "USER") {
