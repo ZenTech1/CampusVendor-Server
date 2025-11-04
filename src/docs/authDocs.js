@@ -70,6 +70,42 @@
 
 /**
  * @swagger
+ * /api/auth/signUp/admin:
+ *   post:
+ *     summary: Admin registration with verification code
+ *     description: Registers an admin user with a secret code. No OTP required.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password, code]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Admin User"
+ *               email:
+ *                 type: string
+ *                 example: "admin@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "adminsecurepass123"
+ *               code:
+ *                 type: string
+ *                 example: "2468"
+ *     responses:
+ *       201:
+ *         description: Admin signup complete
+ *       400:
+ *         description: User already exists or invalid admin code
+ *       500:
+ *         description: Server error
+ */
+
+/**
+ * @swagger
  * /api/auth/signUp/vendor:
  *   post:
  *     summary: Vendor registration and OTP
