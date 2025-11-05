@@ -14,6 +14,11 @@ const options = {
         url: "http://localhost:3000",
         description: "Local Server",
       },
+
+      {
+        url: "https://campusvendor-server.onrender.com",
+        description: "Production Server",
+      },
     ],
   },
   apis: ["./src/routes/*.js", "./src/docs/*.js"],
