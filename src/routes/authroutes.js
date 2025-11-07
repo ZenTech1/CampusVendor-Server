@@ -32,7 +32,9 @@ router.post("/signUp/student", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const sent = await sendOTP(name, email, otp);
     if (!sent.success)
-      return res.status(500).json({ message: "Failed to send OTP" });
+      return res
+        .status(500)
+        .json({ message: "Failed to send OTP", error: sent.error });
 
     const signupToken = jwt.sign(
       { name, email, password: hashedPassword, otp },
